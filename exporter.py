@@ -71,8 +71,8 @@ class Exporter(object):
 
     def __init_metrics(self):
         namespace = 'homematicip'
-        labelnames = ['room', 'device_label']
-        detail_labelnames = ['device_type', 'firmware_version', 'permanently_reachable']
+        labelnames = ['room', 'device_label', 'device_type']
+        detail_labelnames = ['firmware_version', 'permanently_reachable']
         event_device_labelnames = ['device_label']
         event_group_labelnames = ['group_label']
         event_labelnames = ['type', 'window_state', 'sabotage']
@@ -165,26 +165,24 @@ class Exporter(object):
 
     def __collect_thermostat_metrics(self, room, device):
         if device.actualTemperature:
-            self.metric_temperature_actual.labels(room=room, device_label=device.label).set(device.actualTemperature)
+            self.metric_temperature_actual.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.actualTemperature)
 
         if device.setPointTemperature:
-            self.metric_temperature_setpoint.labels(room=room, device_label=device.label).set(device.setPointTemperature)
+            self.metric_temperature_setpoint.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.setPointTemperature)
 
         if device.humidity:
-            self.metric_humidity_actual.labels(room=room, device_label=device.label).set(device.humidity)
+            self.metric_humidity_actual.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.humidity)
         logging.info(
             "room: {}, label: {}, temperature_actual: {}, temperature_setpoint: {}, humidity_actual: {}"
             .format(room, device.label, device.actualTemperature, device.setPointTemperature, device.humidity)
         )
 
     def __collect_heating_metrics(self, room, device):
-
-        # Do not check with if as 0 equals false
-        self.metric_temperature_actual.labels(room=room, device_label=device.label).set(device.valveActualTemperature)
-        self.metric_temperature_setpoint.labels(room=room, device_label=device.label).set(device.setPointTemperature)
-        self.metric_valve_adaption_needed.labels(room=room, device_label=device.label).set(device.automaticValveAdaptionNeeded)
-        self.metric_temperature_offset.labels(room=room, device_label=device.label).set(device.temperatureOffset)
-        self.metric_valve_position.labels(room=room, device_label=device.label).set(device.valvePosition)
+        self.metric_temperature_actual.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.valveActualTemperature)
+        self.metric_temperature_setpoint.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.setPointTemperature)
+        self.metric_valve_adaption_needed.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.automaticValveAdaptionNeeded)
+        self.metric_temperature_offset.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.temperatureOffset)
+        self.metric_valve_position.labels(room=room, device_label=device.label, device_type=device.deviceType.lower()).set(device.valvePosition)
 
         logging.info(
             "room: {}, label: {}, temperature_actual: {}, temperature_setpoint: {}, valve_adaption_needed: {}, "
@@ -211,7 +209,8 @@ class Exporter(object):
             # last status update metric
             self.metric_last_status_update.labels(
                 room=room,
-                device_label=device.label
+                device_label=device.label,
+                device_type=device.deviceType.lower(),                
             ).set(device.lastStatusUpdate.timestamp())
 
     def __collect_power_metrics(self, room, device):
@@ -224,7 +223,8 @@ class Exporter(object):
         logging.info(device.currentPowerConsumption)
         self.metric_power_consumption.labels(
             room=room,
-            device_label=device.label
+            device_label=device.label,
+            device_type=device.deviceType.lower()
         ).set(device.currentPowerConsumption)
 
     def __collect_event_metrics(self, eventList):
